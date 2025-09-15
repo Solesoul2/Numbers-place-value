@@ -1,455 +1,442 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>منازل الأعداد</title>
-    <style>
-        /* --- الإعدادات العامة والخطوط --- */
-        :root {
-            --units-color: #2E7D32;
-            --units-bg: #E8F5E9;
-            --thousands-color: #1565C0;
-            --thousands-bg: #E3F2FD;
-            --millions-color: #6A1B9A;
-            --millions-bg: #F3E5F5;
-            --background-color: #f0f4f8;
-            --text-color: #263238;
-            --light-text-color: #FFFFFF;
-            --border-radius: 16px;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>منازل الأعداد — صف أفقي واحد</title>
+<style>
+  :root{
+    --bg:#f7f7fb; --ink:#1b1b1f; --muted:#7a7a85; --card:#ffffff; --shadow:0 6px 18px rgba(0,0,0,.08);
+    --units:#2fbf71;      /* الآحاد */
+    --thousands:#3c83f6;  /* الألوف */
+    --millions:#8b5cf6;   /* الملايين */
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Naskh Arabic UI", "Noto Sans Arabic", Arial, sans-serif;}
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-4px); }
-            75% { transform: translateX(4px); }
-        }
+  /* الشريط العلوي */
+  .topbar{
+    position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#fff,rgba(255,255,255,.94));
+    box-shadow:0 2px 8px rgba(0,0,0,.06);
+    padding:10px 12px 12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap
+  }
+  .big{font-weight:800;letter-spacing:.5px;font-size:clamp(28px,7vw,56px);line-height:1}
+  .hint{font-size:12px;color:var(--muted);padding-inline:8px;padding-block:4px;border-radius:999px;background:#f0f0f4}
+  .modegroup{display:flex;gap:6px;margin-inline-start:auto}
+  .modegroup button,.reset{
+    border:0;border-radius:999px;padding:8px 12px;font-size:14px;cursor:pointer;background:#ececf6;color:#2d2d33;
+    box-shadow:inset 0 -2px 0 rgba(0,0,0,.05)
+  }
+  .modegroup button.active{background:#1f2937;color:#fff}
+  .target-pill{
+    display:inline-flex;align-items:center;gap:6px;background:#ffecc7;color:#8a4b00;border-radius:999px;padding:6px 10px;
+    box-shadow:inset 0 -2px 0 rgba(0,0,0,.06)
+  }
+  .target-pill .close{margin-inline-start:4px;border:0;background:transparent;cursor:pointer;font-size:16px;line-height:1}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            min-height: 100vh;
-            -webkit-user-select: none;
-            user-select: none;
-            overflow-x: auto;
-            overflow-y: hidden;
-            box-sizing: border-box;
-        }
+  /* اللوح: صف أفقي واحد — الآحاد يمين ← … ← الملايين يسار */
+  .board-wrap{padding:14px}
+  .board{
+    direction: rtl;                  /* مهم على أندرويد */
+    display:flex; flex-direction:row;/* يعرض العناصر من اليمين لليسار مع dir=rtl */
+    gap:12px; align-items:stretch;
+    overflow-x:auto; overflow-y:visible;
+    -webkit-overflow-scrolling:touch;
+    scroll-snap-type:x mandatory; padding-bottom:8px; flex-wrap:nowrap; width:100%;
+  }
 
-        /* --- الشريط العلوي --- */
-        .top-bar {
-            width: 100%;
-            max-width: 1200px;
-            background: #ffffff;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 0.75rem 1.5rem;
-            margin-bottom: 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-sizing: border-box;
-            flex-shrink: 0;
-        }
-        
-        .number-display {
-            font-size: clamp(2rem, 8vw, 3.5rem);
-            font-weight: bold;
-            letter-spacing: 2px;
-            direction: ltr;
-            text-align: right;
-            flex-grow: 1;
-        }
+  /* بطاقة وعاء */
+  .bowl-card{
+    flex:0 0 auto; width: clamp(170px, 22vw, 220px);
+    background:var(--card); border-radius:18px; box-shadow:var(--shadow); padding:12px;
+    display:flex; flex-direction:column; gap:10px; position:relative; scroll-snap-align:start; isolation:isolate;
+  }
+  .cap{
+    position:absolute; inset-inline:10px 10px; top:8px; height:28px; border-radius:999px;
+    display:flex; align-items:center; justify-content:center; gap:6px; font-size:12px; font-weight:700; color:#fff;
+    pointer-events:none;
+  }
+  .cap .dot{width:10px;height:10px;border-radius:50%;background:#fff;opacity:.9}
 
-        .controls-area { display: flex; align-items: center; gap: 1rem; }
-        .instruction { font-size: clamp(1rem, 3vw, 1.5rem); font-weight: 500; color: #546E7A; white-space: nowrap; }
+  /* ألوان */
+  .bowl-card.units{--col:var(--units)}
+  .bowl-card.thousands{--col:var(--thousands)}
+  .bowl-card.millions{--col:var(--millions)}
+  .bowl-card{outline:2px solid rgba(0,0,0,.04); background:linear-gradient(180deg, rgba(255,255,255,1), color-mix(in srgb, var(--col) 10%, #fff));}
+  .cap{background: color-mix(in srgb, var(--col) 90%, #000)}
 
-        .mode-buttons button, .reset-button {
-            padding: 0.5rem 1rem;
-            font-size: clamp(0.8rem, 2vw, 1rem);
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            background-color: #ECEFF1;
-            color: var(--text-color);
-            transition: background-color 0.2s, transform 0.1s;
-            font-weight: 500;
-        }
+  .b-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:30px}
+  .b-head .mini{font-size:13px;color:#1f2430;font-weight:700}
+  .b-buttons{display:flex;gap:8px}
+  .b-buttons button{
+    border:0;border-radius:12px;padding:10px 14px;min-width:52px;font-size:20px;font-weight:800;cursor:pointer;
+    background:#ffffff;box-shadow:var(--shadow);touch-action:manipulation
+  }
+  .b-buttons button:active{transform:translateY(1px)}
 
-        .mode-buttons button.active { background-color: var(--thousands-color); color: var(--light-text-color); font-weight: bold; }
-        .reset-button { background-color: #CFD8DC; }
-        .mode-buttons button:active, .reset-button:active { transform: scale(0.95); }
+  .grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:8px;flex:1;align-content:start;min-height:100px
+  }
+  .ball{
+    width:clamp(18px,5vw,26px);aspect-ratio:1;border-radius:999px;background:var(--col);
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,.15)); transform:scale(0); animation:pop .15s forwards
+  }
 
-        /* --- حاوية منازل الأعداد --- */
-        .place-values-container {
-            display: inline-flex;
-            flex-wrap: nowrap;
-            gap: 1rem;
-            padding-bottom: 1.5rem; /* Space for scrollbar */
-            justify-content: flex-start;
-            align-items: flex-start;
-            width: max-content;
-        }
+  .deny{animation:shake .28s linear}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+  @keyframes pop{to{transform:scale(1)}}
 
-        /* --- تصميم الوعاء الواحد --- */
-        .vessel {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.75rem;
-            background: #ffffff;
-            border-radius: var(--border-radius);
-            padding: 0.75rem;
-            box-shadow: var(--shadow);
-            flex-shrink: 0;
-            width: 160px;
-            border-top: 5px solid;
-            transition: transform 0.2s;
-        }
+  /* لوحة الهدف */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,25,.25);display:none;place-items:center;z-index:20;backdrop-filter:saturate(1.2) blur(1.5px)}
+  .overlay.show{display:grid}
+  .keypad{width:min(720px,92vw);background:#fff;border-radius:20px;box-shadow:0 20px 50px rgba(0,0,0,.18);padding:16px;display:flex;flex-direction:column;gap:12px}
+  .goal-display{font-weight:800;font-size:clamp(24px,6vw,40px);padding:10px 14px;border-radius:14px;background:#f4f4fb;display:flex;justify-content:space-between;align-items:center}
+  .keys{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+  .keys button{border:0;border-radius:14px;background:#161823;color:#fff;box-shadow:inset 0 -2px 0 rgba(0,0,0,.3);padding:16px 10px;font-size:20px;font-weight:800;cursor:pointer}
+  .keys button.alt{background:#e7e7f3;color:#1f2937;font-weight:700}
+  .keys button.ok{background:#22c55e}
+  .keys button.del{background:#ef4444}
+  .keys button.exit{background:#334155;color:#fff}
+  .keys button:active{transform:translateY(1px)}
+  .kbd-hint{font-size:12px;color:var(--muted);text-align:center;margin-top:-2px}
 
-        .vessel.shake { animation: shake 0.3s; }
+  /* كانفس القصاصات */
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:30}
 
-        .vessel-label {
-            font-size: 0.9rem;
-            font-weight: bold;
-            color: var(--light-text-color);
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            width: fit-content;
-        }
-
-        .balls-container {
-            width: 100%;
-            height: 150px;
-            background-color: #ECEFF1;
-            border-radius: 10px;
-            padding: 8px;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            gap: 5px;
-            align-content: start;
-            border: 2px solid #CFD8DC;
-            box-sizing: border-box;
-        }
-
-        .ball {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            box-shadow: inset 0 -3px 5px rgba(0,0,0,0.2);
-        }
-        
-        .ball.pop-in { animation: pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes pop-in { 0% { transform: scale(0); } 100% { transform: scale(1); } }
-
-        /* --- أزرار التحكم +/- --- */
-        .vessel-controls {
-            display: flex;
-            gap: 1rem;
-            width: 100%;
-            justify-content: space-around;
-        }
-
-        .vessel-controls button {
-            width: 45%;
-            height: 44px;
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--light-text-color);
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding-bottom: 5px;
-            box-shadow: 0 3px 0 rgba(0,0,0,0.3);
-            transition: transform 0.1s, box-shadow 0.1s;
-        }
-        
-        .vessel-controls button:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.3); }
-
-        /* --- تخصيص ألوان الأوعية --- */
-        .vessel.units { background-color: var(--units-bg); border-color: var(--units-color); }
-        .vessel.units .vessel-label { background-color: var(--units-color); }
-        .vessel.units .ball { background-color: var(--units-color); }
-        .vessel.units .vessel-controls button { background-color: var(--units-color); }
-        
-        .vessel.thousands { background-color: var(--thousands-bg); border-color: var(--thousands-color); }
-        .vessel.thousands .vessel-label { background-color: var(--thousands-color); }
-        .vessel.thousands .ball { background-color: var(--thousands-color); }
-        .vessel.thousands .vessel-controls button { background-color: var(--thousands-color); }
-
-        .vessel.millions { background-color: var(--millions-bg); border-color: var(--millions-color); }
-        .vessel.millions .vessel-label { background-color: var(--millions-color); }
-        .vessel.millions .ball { background-color: var(--millions-color); }
-        .vessel.millions .vessel-controls button { background-color: var(--millions-color); }
-        
-        /* --- لوحة الأرقام للهدف --- */
-        .numpad-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .numpad-container { background-color: white; padding: 1.5rem; border-radius: var(--border-radius); box-shadow: 0 8px 24px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 1rem; }
-        .numpad-display { background-color: #ECEFF1; padding: 0.5rem 1rem; border-radius: 10px; text-align: center; font-size: 2rem; font-weight: bold; min-height: 48px; }
-        .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
-        .numpad-grid button, .numpad-actions button { padding: 1rem; font-size: 1.5rem; border: none; border-radius: 10px; cursor: pointer; background-color: #CFD8DC; }
-        .numpad-actions { display: flex; gap: 0.75rem; }
-        .numpad-actions .confirm-btn { flex-grow: 1; background-color: var(--units-color); color: white; }
-        
-        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; }
-        
-        @media (max-width: 900px) or (max-height: 500px) {
-            .top-bar { flex-direction: column; gap: 0.5rem; padding: 0.5rem 1rem; margin-bottom: 1rem;}
-            .vessel { width: 130px; }
-            .balls-container { height: 120px; }
-            .vessel-controls button { height: 38px; font-size: 1.5rem; }
-        }
-    </style>
+  @media (hover:none){ .b-buttons button{min-height:56px} }
+</style>
 </head>
 <body>
+  <canvas id="confetti"></canvas>
 
-    <header class="top-bar">
-        <div class="controls-area">
-            <div class="mode-buttons">
-                <button id="mode-free" class="active">حر</button>
-                <button id="mode-random">عشوائي</button>
-                <button id="mode-target">هدف</button>
-            </div>
-            <button class="reset-button" id="reset-btn" title="إعادة ضبط">↻</button>
-        </div>
-        <div class="instruction" id="instruction-text">كوّن أي رقم!</div>
-        <div class="number-display" id="total-number-display">٠</div>
-    </header>
+  <div class="topbar">
+    <div class="big" id="bigNumber">٠</div>
+    <span class="hint">كوِّن الرقم</span>
 
-    <main class="place-values-container">
-        <div class="vessel units" data-index="0"><label class="vessel-label">آحاد</label><div class="balls-container"></div><div class="vessel-controls"><button class="btn-add">+</button><button class="btn-remove">−</button></div></div>
-        <div class="vessel units" data-index="1"><label class="vessel-label">عشرات</label><div class="balls-container"></div><div class="vessel-controls"><button class="btn-add">+</button><button class="btn-remove">−</button></div></div>
-        <div class="vessel units" data-index="2"><label class="vessel-label">مئات</label><div class="balls-container"></div><div class="vessel-controls"><button class="btn-add">+</button><button class="btn-remove">−</button></div></div>
+    <span class="target-pill" id="targetPill" style="display:none">
+      <span>🎯</span><strong id="targetText">٠</strong>
+      <button class="close" id="clearTarget" title="إزالة الهدف">✖</button>
+    </span>
 
-        <div class="vessel thousands" data-index="3"><label class="vessel-label">ألوف • آحاد</label><div class="balls-container"></div><div class="vessel-controls"><button class="btn-add">+</button><button class="btn-remove">−</button></div></div>
-        <div class="vessel thousands" data-index="4"><label class="vessel-label">ألوف • عشرات</label><div class="balls-container"></div><div class="vessel-controls"><button class="btn-add">+</button><button class="btn-remove">−</button></div></div>
-        <div class="vessel thousands" data-index="5"><label class="vessel-label">ألوف • مئات</label><div class="balls-container"></div><div class="vessel-controls"><button class="btn-add">+</button><button class="btn-remove">−</button></div></div>
-
-        <div class="vessel millions" data-index="6"><label class="vessel-label">ملايين • آحاد</label><div class="balls-container"></div><div class="vessel-controls"><button class="btn-add">+</button><button class="btn-remove">−</button></div></div>
-        <div class="vessel millions" data-index="7"><label class="vessel-label">ملايين • عشرات</label><div class="balls-container"></div><div class="vessel-controls"><button class="btn-add">+</button><button class="btn-remove">−</button></div></div>
-        <div class="vessel millions" data-index="8"><label class="vessel-label">ملايين • مئات</label><div class="balls-container"></div><div class="vessel-controls"><button class="btn-add">+</button><button class="btn-remove">−</button></div></div>
-    </main>
-
-    <div class="numpad-modal" id="numpad-modal">
-        <div class="numpad-container"><div class="numpad-display" id="numpad-display"></div><div class="numpad-grid"><button>١</button><button>٢</button><button>٣</button><button>٤</button><button>٥</button><button>٦</button><button>٧</button><button>٨</button><button>٩</button><button>مسح</button><button>٠</button><button>إلغاء</button></div><div class="numpad-actions"><button class="confirm-btn">كوّن الهدف</button></div></div>
+    <div class="modegroup" role="group" aria-label="الأوضاع">
+      <button id="modeFree" class="active" title="وضع حر">حر</button>
+      <button id="modeRandom" title="توليد هدف عشوائي">عشوائي</button>
+      <button id="modeGoal" title="تحديد هدف يدوي">هدف</button>
     </div>
-    <canvas id="confetti-canvas"></canvas>
+    <button class="reset" id="resetBtn" title="إعادة ضبط">↺ إعادة ضبط</button>
+  </div>
 
-    <script>
-        // لا يوجد أي تغيير في كود الجافاسكربت، فهو يعمل كما هو
-        document.addEventListener('DOMContentLoaded', () => {
-            const vessels = document.querySelectorAll('.vessel');
-            const totalNumberDisplay = document.getElementById('total-number-display');
-            const instructionText = document.getElementById('instruction-text');
-            const modeButtons = {
-                free: document.getElementById('mode-free'),
-                random: document.getElementById('mode-random'),
-                target: document.getElementById('mode-target'),
-            };
-            const resetBtn = document.getElementById('reset-btn');
-            const numpadModal = document.getElementById('numpad-modal');
-            const numpadDisplay = document.getElementById('numpad-display');
+  <div class="board-wrap">
+    <div class="board" id="board">
+      <!-- الترتيب أفقي: الآحاد (يمين) ← الألوف ← الملايين (يسار) -->
+      <!-- الآحاد -->
+      <section class="bowl-card units" id="unitsAnchor" data-key="u1" data-mult="1">
+        <div class="cap"><span class="dot"></span><span>الآحاد • آحاد</span></div>
+        <div class="b-head"><span class="mini">آحاد</span>
+          <div class="b-buttons"><button data-act="plus">＋</button><button data-act="minus">−</button></div>
+        </div><div class="grid"></div>
+      </section>
+      <section class="bowl-card units" data-key="u10" data-mult="10">
+        <div class="cap"><span class="dot"></span><span>الآحاد • عشرات</span></div>
+        <div class="b-head"><span class="mini">عشرات</span>
+          <div class="b-buttons"><button data-act="plus">＋</button><button data-act="minus">−</button></div>
+        </div><div class="grid"></div>
+      </section>
+      <section class="bowl-card units" data-key="u100" data-mult="100">
+        <div class="cap"><span class="dot"></span><span>الآحاد • مئات</span></div>
+        <div class="b-head"><span class="mini">مئات</span>
+          <div class="b-buttons"><button data-act="plus">＋</button><button data-act="minus">−</button></div>
+        </div><div class="grid"></div>
+      </section>
 
-            let state = Array(9).fill(0);
-            let currentMode = 'free';
-            let targetNumber = null;
-            let audioCtx;
+      <!-- الألوف -->
+      <section class="bowl-card thousands" data-key="t1" data-mult="1000">
+        <div class="cap"><span class="dot"></span><span>الألوف • آحاد</span></div>
+        <div class="b-head"><span class="mini">آحاد</span>
+          <div class="b-buttons"><button data-act="plus">＋</button><button data-act="minus">−</button></div>
+        </div><div class="grid"></div>
+      </section>
+      <section class="bowl-card thousands" data-key="t10" data-mult="10000">
+        <div class="cap"><span class="dot"></span><span>الألوف • عشرات</span></div>
+        <div class="b-head"><span class="mini">عشرات</span>
+          <div class="b-buttons"><button data-act="plus">＋</button><button data-act="minus">−</button></div>
+        </div><div class="grid"></div>
+      </section>
+      <section class="bowl-card thousands" data-key="t100" data-mult="100000">
+        <div class="cap"><span class="dot"></span><span>الألوف • مئات</span></div>
+        <div class="b-head"><span class="mini">مئات</span>
+          <div class="b-buttons"><button data-act="plus">＋</button><button data-act="minus">−</button></div>
+        </div><div class="grid"></div>
+      </section>
 
-            function init() {
-                vessels.forEach(vessel => {
-                    const index = parseInt(vessel.dataset.index);
-                    vessel.querySelector('.btn-add').addEventListener('click', () => handleValueChange(index, 1, vessel));
-                    vessel.querySelector('.btn-remove').addEventListener('click', () => handleValueChange(index, -1, vessel));
-                });
-                Object.values(modeButtons).forEach(button => button.addEventListener('click', () => setMode(button.id.split('-')[1])));
-                resetBtn.addEventListener('click', resetAll);
-                initNumpad();
-                updateAllVessels();
-                updateTotalDisplay();
-            }
+      <!-- الملايين -->
+      <section class="bowl-card millions" data-key="m1" data-mult="1000000">
+        <div class="cap"><span class="dot"></span><span>الملايين • آحاد</span></div>
+        <div class="b-head"><span class="mini">آحاد</span>
+          <div class="b-buttons"><button data-act="plus">＋</button><button data-act="minus">−</button></div>
+        </div><div class="grid"></div>
+      </section>
+      <section class="bowl-card millions" data-key="m10" data-mult="10000000">
+        <div class="cap"><span class="dot"></span><span>الملايين • عشرات</span></div>
+        <div class="b-head"><span class="mini">عشرات</span>
+          <div class="b-buttons"><button data-act="plus">＋</button><button data-act="minus">−</button></div>
+        </div><div class="grid"></div>
+      </section>
+      <section class="bowl-card millions" data-key="m100" data-mult="100000000">
+        <div class="cap"><span class="dot"></span><span>الملايين • مئات</span></div>
+        <div class="b-head"><span class="mini">مئات</span>
+          <div class="b-buttons"><button data-act="plus">＋</button><button data-act="minus">−</button></div>
+        </div><div class="grid"></div>
+      </section>
+    </div>
+  </div>
 
-            function handleValueChange(index, change, vesselElement) {
-                const newValue = state[index] + change;
-                if (newValue >= 0 && newValue <= 9) {
-                    state[index] = newValue;
-                    updateVessel(index);
-                    updateTotalDisplay();
-                    playSound(change > 0 ? 'add' : 'remove');
-                    checkWinCondition();
-                } else {
-                    vesselElement.classList.add('shake');
-                    setTimeout(() => vesselElement.classList.remove('shake'), 300);
-                    playSound('error');
-                }
-            }
+  <!-- لوحة هدف يدوي -->
+  <div class="overlay" id="overlay">
+    <div class="keypad" role="dialog" aria-label="ضبط الهدف">
+      <div class="goal-display"><strong>🎯 الهدف</strong><span id="goalPreview">٠</span></div>
+      <div class="keys" id="keys"></div>
+      <div class="kbd-hint">أقصى طول ٩ خانات (حتى ٩٩٩،٩٩٩،٩٩٩)</div>
+    </div>
+  </div>
 
-            function updateAllVessels() {
-                state.forEach((_, index) => updateVessel(index));
-            }
+<script>
+(() => {
+  "use strict";
+  /* ===== أرقام عربية ===== */
+  const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
+  const toArabicDigits = s => s.replace(/\d/g, d => arabicDigits[d]);
+  const formatArabic = n => {
+    const s = n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return toArabicDigits(s).replace(/,/g, "،");
+  };
 
-            function updateVessel(index) {
-                const ballsContainer = document.querySelector(`.vessel[data-index='${index}'] .balls-container`);
-                ballsContainer.innerHTML = '';
-                for (let i = 0; i < state[index]; i++) {
-                    const ball = document.createElement('div');
-                    ball.className = 'ball pop-in';
-                    ballsContainer.appendChild(ball);
-                }
-            }
-            
-            function updateTotalDisplay() {
-                const total = state.reduce((sum, val, i) => sum + BigInt(val) * (10n ** BigInt(i)), 0n);
-                totalNumberDisplay.textContent = formatNumber(total);
-            }
+  /* ===== صوت (Web Audio) ===== */
+  let audioCtx;
+  const ensureAudio = () => {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+  };
+  const beep = (freq=600, dur=0.08, type="sine", vol=0.06) => {
+    try{
+      ensureAudio();
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = type; o.frequency.value = freq; o.connect(g); g.connect(audioCtx.destination);
+      const now = audioCtx.currentTime;
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(vol, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      o.start(now); o.stop(now + dur + 0.02);
+    }catch{}
+  };
+  const chord = (notes=[523,659,784,988]) => {
+    ensureAudio();
+    const start = audioCtx.currentTime + 0.02;
+    notes.forEach((f,i)=>{
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type="triangle"; o.frequency.value=f; o.connect(g); g.connect(audioCtx.destination);
+      const t = start + i*0.03;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.08, t+0.04);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+0.28);
+      o.start(t); o.stop(t+0.32);
+    });
+  };
 
-            function formatNumber(num) {
-                const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-                const numStr = String(num);
-                let formatted = numStr.replace(/\B(?=(\d{3})+(?!\d))/g, "،");
-                return formatted.replace(/\d/g, d => arabicNumerals[d]);
-            }
+  /* ===== الحالة ===== */
+  const state = {u1:0,u10:0,u100:0, t1:0,t10:0,t100:0, m1:0,m10:0,m100:0};
+  const cards = [...document.querySelectorAll(".bowl-card")];
+  const bigNumberEl = document.getElementById("bigNumber");
 
-            function setMode(mode) {
-                currentMode = mode;
-                targetNumber = null;
-                Object.values(modeButtons).forEach(b => b.classList.remove('active'));
-                modeButtons[mode].classList.add('active');
-                
-                if (mode === 'free') {
-                    instructionText.textContent = 'كوّن أي رقم!';
-                } else if (mode === 'random') {
-                    targetNumber = BigInt(Math.floor(Math.random() * 999999999) + 1);
-                    instructionText.innerHTML = `الهدف: <span dir="ltr">${formatNumber(targetNumber)}</span>`;
-                } else if (mode === 'target') {
-                    numpadDisplay.textContent = '';
-                    numpadModal.style.display = 'flex';
-                    instructionText.textContent = 'أدخل الهدف...';
-                }
-            }
-            
-            function resetAll() {
-                state.fill(0);
-                updateAllVessels();
-                updateTotalDisplay();
-                setMode('free');
-            }
+  const getValue = () => cards.reduce((acc, c)=>{
+    const key = c.dataset.key, mult = +c.dataset.mult;
+    return acc + (state[key]||0)*mult;
+  },0);
 
-            function checkWinCondition() {
-                if (currentMode === 'free' || targetNumber === null) return;
-                
-                const currentTotal = state.reduce((sum, val, i) => sum + BigInt(val) * (10n ** BigInt(i)), 0n);
-                if (currentTotal === targetNumber) {
-                    playSound('success');
-                    triggerConfetti();
-                    instructionText.textContent = 'أحسنت!';
-                    setTimeout(() => {
-                        if (currentMode === 'random') setMode('random');
-                        else setMode('free');
-                    }, 3000);
-                }
-            }
-            
-            function initNumpad() {
-                numpadModal.addEventListener('click', e => {
-                    if (e.target.tagName !== 'BUTTON') return;
-                    const value = e.target.textContent;
-                    
-                    if (value >= '٠' && value <= '٩') {
-                        if (numpadDisplay.textContent.length < 9) numpadDisplay.textContent += value;
-                    } else if (value === 'مسح') {
-                        numpadDisplay.textContent = numpadDisplay.textContent.slice(0, -1);
-                    } else if (value === 'إلغاء') {
-                        numpadModal.style.display = 'none';
-                        setMode('free');
-                    } else if (value === 'كوّن الهدف') {
-                        if (numpadDisplay.textContent) {
-                            const arabicToArabicDigits = {'٠': 0, '١': 1, '٢': 2, '٣': 3, '٤': 4, '٥': 5, '٦': 6, '٧': 7, '٨': 8, '٩': 9};
-                            const englishNumStr = [...numpadDisplay.textContent].map(c => arabicToArabicDigits[c]).join('');
-                            targetNumber = BigInt(englishNumStr);
-                            instructionText.innerHTML = `الهدف: <span dir="ltr">${formatNumber(targetNumber)}</span>`;
-                            numpadModal.style.display = 'none';
-                        }
-                    }
-                });
-            }
+  const renderCard = (c) => {
+    const key = c.dataset.key;
+    const grid = c.querySelector(".grid");
+    grid.innerHTML = "";
+    const count = state[key]||0;
+    for(let i=0;i<count;i++){
+      const ball = document.createElement("div");
+      ball.className = "ball";
+      grid.appendChild(ball);
+    }
+  };
+  const renderAll = () => {
+    cards.forEach(renderCard);
+    const val = getValue();
+    bigNumberEl.textContent = formatArabic(val);
+    if (currentTarget != null) checkWin(val);
+  };
 
-            function playSound(type) {
-                if (!audioCtx) {
-                    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
-                    catch (e) { console.warn('Web Audio API is not supported'); return; }
-                }
-                if (type === 'success') {
-                    playNote(659.25, 0, 0.1); playNote(783.99, 0.1, 0.1); playNote(1046.50, 0.2, 0.2);
-                    return;
-                }
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                let freq = 440, duration = 0.1, vol = 0.3;
-                switch(type) {
-                    case 'add': freq = 523.25; vol = 0.2; break;
-                    case 'remove': freq = 392; vol = 0.2; break;
-                    case 'error': freq = 150; oscillator.type = 'square'; duration = 0.2; break;
-                }
-                oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + duration);
-            }
-            
-            function playNote(frequency, startTime, duration) {
-                 if (!audioCtx) return;
-                 const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-                 osc.connect(gain); gain.connect(audioCtx.destination);
-                 osc.frequency.value = frequency;
-                 gain.gain.setValueAtTime(0.3, audioCtx.currentTime + startTime);
-                 gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + startTime + duration);
-                 osc.start(audioCtx.currentTime + startTime);
-                 osc.stop(audioCtx.currentTime + startTime + duration);
-            }
-            
-            const confettiCanvas = document.getElementById('confetti-canvas');
-            const confettiCtx = confettiCanvas.getContext('2d');
-            let confettiParticles = [];
-            const confettiColors = ['#2E7D32', '#1565C0', '#6A1B9A', '#FFC107', '#D32F2F'];
+  const deny = (el) => {
+    el.classList.remove("deny"); void el.offsetWidth; el.classList.add("deny");
+    beep(160,0.08,"square",0.05); if (navigator.vibrate) navigator.vibrate(30);
+  };
 
-            function triggerConfetti() {
-                confettiCanvas.width = window.innerWidth; confettiCanvas.height = window.innerHeight;
-                confettiParticles = [];
-                for (let i = 0; i < 150; i++) {
-                    confettiParticles.push({x: confettiCanvas.width/2, y: confettiCanvas.height/2, size: Math.random()*5+5, speed: Math.random()*8+3, angle: Math.random()*Math.PI*2, color: confettiColors[Math.floor(Math.random()*confettiColors.length)], rotation: Math.random()*10, spin: (Math.random()-0.5)*5, alpha: 1,});
-                }
-                animateConfetti();
-            }
+  cards.forEach(c=>{
+    c.addEventListener("click", (ev)=>{
+      const btn = ev.target.closest("button"); if(!btn) return;
+      const act = btn.dataset.act, key = c.dataset.key;
+      if (act === "plus"){
+        if (state[key] >= 9){ deny(c); return; }
+        state[key]++; renderCard(c); renderAll(); beep(700,0.06,"sine",0.06);
+      } else {
+        if (state[key] <= 0){ deny(c); return; }
+        state[key]--; renderCard(c); renderAll(); beep(420,0.06,"sine",0.06);
+      }
+    });
+  });
 
-            function animateConfetti() {
-                confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-                let stillActive = false;
-                confettiParticles.forEach(p => {
-                    if(p.alpha > 0) {
-                        stillActive = true; p.x += Math.cos(p.angle) * p.speed; p.y += Math.sin(p.angle) * p.speed + 2; p.rotation += p.spin; p.alpha -= 0.01;
-                        confettiCtx.save(); confettiCtx.globalAlpha = p.alpha; confettiCtx.translate(p.x, p.y); confettiCtx.rotate(p.rotation * Math.PI / 180); confettiCtx.fillStyle = p.color; confettiCtx.fillRect(-p.size/2, -p.size/2, p.size, p.size); confettiCtx.restore();
-                    }
-                });
-                if (stillActive) requestAnimationFrame(animateConfetti);
-                else confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-            }
-            init();
-        });
-    </script>
+  /* ===== أوضاع ===== */
+  const modeBtns = {
+    free: document.getElementById("modeFree"),
+    random: document.getElementById("modeRandom"),
+    goal: document.getElementById("modeGoal"),
+  };
+  const targetPill = document.getElementById("targetPill");
+  const targetText = document.getElementById("targetText");
+  const clearTargetBtn = document.getElementById("clearTarget");
+  const resetBtn = document.getElementById("resetBtn");
+
+  let mode = "free";
+  let currentTarget = null;
+  let lastWinValue = null;
+
+  const setMode = (m) => {
+    mode = m;
+    Object.values(modeBtns).forEach(b=>b.classList.remove("active"));
+    if (m==="free"){ modeBtns.free.classList.add("active"); hideTarget(); }
+    if (m==="random"){ modeBtns.random.classList.add("active"); }
+    if (m==="goal"){ modeBtns.goal.classList.add("active"); }
+  };
+  const showTarget = (n) => {
+    currentTarget = Math.max(0, Math.min(999_999_999, n|0));
+    targetText.textContent = formatArabic(currentTarget);
+    targetPill.style.display = "inline-flex";
+  };
+  const hideTarget = () => { currentTarget = null; targetPill.style.display = "none"; };
+  clearTargetBtn.addEventListener("click", ()=>{ hideTarget(); setMode("free"); renderAll(); });
+
+  modeBtns.free.addEventListener("click", ()=> setMode("free"));
+  modeBtns.random.addEventListener("click", ()=>{
+    setMode("random");
+    const r = Math.floor(Math.random()*999_999_999)+1;
+    showTarget(r); renderAll(); beep(520,0.08,"triangle",0.06);
+  });
+
+  /* ===== لوحة هدف يدوي ===== */
+  const overlay = document.getElementById("overlay");
+  const keysGrid = document.getElementById("keys");
+  const goalPreview = document.getElementById("goalPreview");
+
+  const buildKeypad = () => {
+    keysGrid.innerHTML = "";
+    const makeBtn = (txt, cls="", key="") => {
+      const b = document.createElement("button");
+      b.textContent = txt; if (cls) b.classList.add(cls); if (key) b.dataset.key = key;
+      keysGrid.appendChild(b); return b;
+    };
+    const digits = ["٩","٨","٧","٦","٥","٤","٣","٢","١","٠"];
+    digits.forEach(d => makeBtn(d));
+    makeBtn("🗑️","alt del","clear");
+    makeBtn("⌫","alt del","back");
+    makeBtn("✔","ok","ok");
+    makeBtn("✖","exit","exit");
+    const spacer = document.createElement("div"); spacer.style.visibility="hidden"; keysGrid.appendChild(spacer);
+  };
+
+  let manualBuffer = "";
+  const bufToNumber = () => {
+    const map = {"٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9"};
+    const ascii = manualBuffer.replace(/[٠-٩]/g, ch=>map[ch]);
+    const n = ascii.length ? parseInt(ascii,10) : 0;
+    return Math.min(999_999_999, isNaN(n)?0:n);
+  };
+  const updatePreview = () => { goalPreview.textContent = formatArabic(bufToNumber()); };
+
+  modeBtns.goal.addEventListener("click", ()=>{
+    setMode("goal"); manualBuffer = ""; updatePreview(); overlay.classList.add("show"); beep(480,0.06,"sine",0.05);
+  });
+  overlay.addEventListener("click", (e)=>{ if (e.target === overlay){ overlay.classList.remove("show"); if(currentTarget==null) setMode("free"); }});
+  keysGrid.addEventListener("click", (e)=>{
+    const btn = e.target.closest("button"); if(!btn) return;
+    const k = btn.dataset.key || btn.textContent.trim();
+    ensureAudio();
+    if (/^[٠-٩]$/.test(k)){
+      if (manualBuffer.length >= 9) { deny(keysGrid); return; }
+      manualBuffer += k; beep(620,0.05,"sine",0.05); updatePreview();
+    } else if (k==="clear"){ manualBuffer=""; updatePreview(); beep(300,0.06,"triangle",0.05);
+    } else if (k==="back"){ manualBuffer=manualBuffer.slice(0,-1); updatePreview(); beep(360,0.05,"triangle",0.05);
+    } else if (k==="ok"){ const n = bufToNumber(); showTarget(n); overlay.classList.remove("show"); renderAll(); beep(520,0.08,"triangle",0.06);
+    } else if (k==="exit"){ overlay.classList.remove("show"); if(currentTarget==null) setMode("free"); beep(220,0.05,"sine",0.04); }
+  });
+
+  /* ===== إعادة ضبط ===== */
+  resetBtn.addEventListener("click", ()=>{
+    Object.keys(state).forEach(k=>state[k]=0);
+    cards.forEach(renderCard); hideTarget(); setMode("free"); lastWinValue=null; renderAll(); beep(300,0.05,"triangle",0.06);
+    ensureUnitsVisible();
+  });
+
+  /* ===== فوز + قصاصات ===== */
+  const canvas = document.getElementById("confetti"), ctx = canvas.getContext("2d");
+  let confettiAnim = null, confettiParts = [];
+  const colors = ["#2fbf71","#3c83f6","#8b5cf6","#ffd166","#06d6a0","#ef476f"];
+  const resizeCanvas = () => { canvas.width = innerWidth; canvas.height = innerHeight; };
+  addEventListener("resize", resizeCanvas); resizeCanvas();
+
+  const startConfetti = (duration=1800) => {
+    confettiParts = Array.from({length: 160}, ()=>({
+      x: Math.random()*canvas.width, y: -20 - Math.random()*80, r: 4 + Math.random()*6,
+      s: 2 + Math.random()*3, a: 0.75 + Math.random()*0.25, c: colors[Math.floor(Math.random()*colors.length)], w: Math.random()*2*Math.PI
+    }));
+    const t0 = performance.now();
+    const step = (t) => {
+      const dt = Math.min(32, t - (step.prev||t)); step.prev = t;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      confettiParts.forEach(p=>{
+        p.y += p.s * (dt/16); p.x += Math.sin((t+p.w)/220) * 1.2;
+        ctx.globalAlpha = p.a; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+      });
+      if (t - t0 < duration){ confettiAnim = requestAnimationFrame(step); }
+      else { ctx.clearRect(0,0,canvas.width,canvas.height); cancelAnimationFrame(confettiAnim); confettiAnim=null; }
+    };
+    cancelAnimationFrame(confettiAnim); confettiAnim = requestAnimationFrame(step);
+  };
+
+  const checkWin = (val) => {
+    if (currentTarget==null) return;
+    if (val === currentTarget && lastWinValue !== val){
+      lastWinValue = val; chord(); startConfetti(2000);
+    }
+  };
+
+  /* ===== إظهار الوحدات يمينًا على الهاتف (حل موثوق) ===== */
+  const board = document.getElementById("board");
+  const unitsAnchor = document.getElementById("unitsAnchor");
+  function ensureUnitsVisible(){
+    // يجعل بداية العرض عند عمود الوحدات مهما كان سلوك RTL للمتصفح
+    if (!unitsAnchor) return;
+    unitsAnchor.scrollIntoView({block:"nearest", inline:"end"});
+    // تعزيز في بعض متصفحات أندرويد:
+    requestAnimationFrame(()=> unitsAnchor.scrollIntoView({block:"nearest", inline:"end"}));
+  }
+
+  /* ===== بدء ===== */
+  const keys = document.getElementById("keys"); // لوحة الأرقام
+  const buildKeypadOnce = () => { if (!keys.dataset.ready){ keys.dataset.ready="1"; buildKeypad(); }};
+  buildKeypadOnce();
+  renderAll();
+  addEventListener("pointerdown", ensureAudio, {once:true, passive:true});
+  // عند التحميل وأول تغيير حجم، أظهر الوحدات:
+  ensureUnitsVisible();
+  addEventListener("resize", ()=>{ ensureUnitsVisible(); }, {passive:true});
+})();
+</script>
 </body>
 </html>
