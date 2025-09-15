@@ -36,14 +36,15 @@
   }
   .target-pill .close{margin-inline-start:4px;border:0;background:transparent;cursor:pointer;font-size:16px;line-height:1}
 
-  /* اللوح: صف أفقي واحد — الآحاد يمين ← … ← الملايين يسار */
+  /* اللوح: scroller LTR + row-reverse => عرض آحاد يمين بدون مشاكل أندرويد */
   .board-wrap{padding:14px}
   .board{
-    direction: rtl;                  /* مهم على أندرويد */
-    display:flex; flex-direction:row;/* يعرض العناصر من اليمين لليسار مع dir=rtl */
+    direction:ltr;                   /* مهم: نجعل التمرير بنمط LTR */
+    display:flex; flex-direction:row-reverse; /* لكن الترتيب بصريًا يمين→يسار */
     gap:12px; align-items:stretch;
     overflow-x:auto; overflow-y:visible;
     -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain;
     scroll-snap-type:x mandatory; padding-bottom:8px; flex-wrap:nowrap; width:100%;
   }
 
@@ -130,8 +131,7 @@
 
   <div class="board-wrap">
     <div class="board" id="board">
-      <!-- الترتيب أفقي: الآحاد (يمين) ← الألوف ← الملايين (يسار) -->
-      <!-- الآحاد -->
+      <!-- الآحاد (يمين) ← الألوف ← الملايين (يسار) -->
       <section class="bowl-card units" id="unitsAnchor" data-key="u1" data-mult="1">
         <div class="cap"><span class="dot"></span><span>الآحاد • آحاد</span></div>
         <div class="b-head"><span class="mini">آحاد</span>
@@ -151,7 +151,6 @@
         </div><div class="grid"></div>
       </section>
 
-      <!-- الألوف -->
       <section class="bowl-card thousands" data-key="t1" data-mult="1000">
         <div class="cap"><span class="dot"></span><span>الألوف • آحاد</span></div>
         <div class="b-head"><span class="mini">آحاد</span>
@@ -171,7 +170,6 @@
         </div><div class="grid"></div>
       </section>
 
-      <!-- الملايين -->
       <section class="bowl-card millions" data-key="m1" data-mult="1000000">
         <div class="cap"><span class="dot"></span><span>الملايين • آحاد</span></div>
         <div class="b-head"><span class="mini">آحاد</span>
@@ -278,165 +276,4 @@
     beep(160,0.08,"square",0.05); if (navigator.vibrate) navigator.vibrate(30);
   };
 
-  cards.forEach(c=>{
-    c.addEventListener("click", (ev)=>{
-      const btn = ev.target.closest("button"); if(!btn) return;
-      const act = btn.dataset.act, key = c.dataset.key;
-      if (act === "plus"){
-        if (state[key] >= 9){ deny(c); return; }
-        state[key]++; renderCard(c); renderAll(); beep(700,0.06,"sine",0.06);
-      } else {
-        if (state[key] <= 0){ deny(c); return; }
-        state[key]--; renderCard(c); renderAll(); beep(420,0.06,"sine",0.06);
-      }
-    });
-  });
-
-  /* ===== أوضاع ===== */
-  const modeBtns = {
-    free: document.getElementById("modeFree"),
-    random: document.getElementById("modeRandom"),
-    goal: document.getElementById("modeGoal"),
-  };
-  const targetPill = document.getElementById("targetPill");
-  const targetText = document.getElementById("targetText");
-  const clearTargetBtn = document.getElementById("clearTarget");
-  const resetBtn = document.getElementById("resetBtn");
-
-  let mode = "free";
-  let currentTarget = null;
-  let lastWinValue = null;
-
-  const setMode = (m) => {
-    mode = m;
-    Object.values(modeBtns).forEach(b=>b.classList.remove("active"));
-    if (m==="free"){ modeBtns.free.classList.add("active"); hideTarget(); }
-    if (m==="random"){ modeBtns.random.classList.add("active"); }
-    if (m==="goal"){ modeBtns.goal.classList.add("active"); }
-  };
-  const showTarget = (n) => {
-    currentTarget = Math.max(0, Math.min(999_999_999, n|0));
-    targetText.textContent = formatArabic(currentTarget);
-    targetPill.style.display = "inline-flex";
-  };
-  const hideTarget = () => { currentTarget = null; targetPill.style.display = "none"; };
-  clearTargetBtn.addEventListener("click", ()=>{ hideTarget(); setMode("free"); renderAll(); });
-
-  modeBtns.free.addEventListener("click", ()=> setMode("free"));
-  modeBtns.random.addEventListener("click", ()=>{
-    setMode("random");
-    const r = Math.floor(Math.random()*999_999_999)+1;
-    showTarget(r); renderAll(); beep(520,0.08,"triangle",0.06);
-  });
-
-  /* ===== لوحة هدف يدوي ===== */
-  const overlay = document.getElementById("overlay");
-  const keysGrid = document.getElementById("keys");
-  const goalPreview = document.getElementById("goalPreview");
-
-  const buildKeypad = () => {
-    keysGrid.innerHTML = "";
-    const makeBtn = (txt, cls="", key="") => {
-      const b = document.createElement("button");
-      b.textContent = txt; if (cls) b.classList.add(cls); if (key) b.dataset.key = key;
-      keysGrid.appendChild(b); return b;
-    };
-    const digits = ["٩","٨","٧","٦","٥","٤","٣","٢","١","٠"];
-    digits.forEach(d => makeBtn(d));
-    makeBtn("🗑️","alt del","clear");
-    makeBtn("⌫","alt del","back");
-    makeBtn("✔","ok","ok");
-    makeBtn("✖","exit","exit");
-    const spacer = document.createElement("div"); spacer.style.visibility="hidden"; keysGrid.appendChild(spacer);
-  };
-
-  let manualBuffer = "";
-  const bufToNumber = () => {
-    const map = {"٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9"};
-    const ascii = manualBuffer.replace(/[٠-٩]/g, ch=>map[ch]);
-    const n = ascii.length ? parseInt(ascii,10) : 0;
-    return Math.min(999_999_999, isNaN(n)?0:n);
-  };
-  const updatePreview = () => { goalPreview.textContent = formatArabic(bufToNumber()); };
-
-  modeBtns.goal.addEventListener("click", ()=>{
-    setMode("goal"); manualBuffer = ""; updatePreview(); overlay.classList.add("show"); beep(480,0.06,"sine",0.05);
-  });
-  overlay.addEventListener("click", (e)=>{ if (e.target === overlay){ overlay.classList.remove("show"); if(currentTarget==null) setMode("free"); }});
-  keysGrid.addEventListener("click", (e)=>{
-    const btn = e.target.closest("button"); if(!btn) return;
-    const k = btn.dataset.key || btn.textContent.trim();
-    ensureAudio();
-    if (/^[٠-٩]$/.test(k)){
-      if (manualBuffer.length >= 9) { deny(keysGrid); return; }
-      manualBuffer += k; beep(620,0.05,"sine",0.05); updatePreview();
-    } else if (k==="clear"){ manualBuffer=""; updatePreview(); beep(300,0.06,"triangle",0.05);
-    } else if (k==="back"){ manualBuffer=manualBuffer.slice(0,-1); updatePreview(); beep(360,0.05,"triangle",0.05);
-    } else if (k==="ok"){ const n = bufToNumber(); showTarget(n); overlay.classList.remove("show"); renderAll(); beep(520,0.08,"triangle",0.06);
-    } else if (k==="exit"){ overlay.classList.remove("show"); if(currentTarget==null) setMode("free"); beep(220,0.05,"sine",0.04); }
-  });
-
-  /* ===== إعادة ضبط ===== */
-  resetBtn.addEventListener("click", ()=>{
-    Object.keys(state).forEach(k=>state[k]=0);
-    cards.forEach(renderCard); hideTarget(); setMode("free"); lastWinValue=null; renderAll(); beep(300,0.05,"triangle",0.06);
-    ensureUnitsVisible();
-  });
-
-  /* ===== فوز + قصاصات ===== */
-  const canvas = document.getElementById("confetti"), ctx = canvas.getContext("2d");
-  let confettiAnim = null, confettiParts = [];
-  const colors = ["#2fbf71","#3c83f6","#8b5cf6","#ffd166","#06d6a0","#ef476f"];
-  const resizeCanvas = () => { canvas.width = innerWidth; canvas.height = innerHeight; };
-  addEventListener("resize", resizeCanvas); resizeCanvas();
-
-  const startConfetti = (duration=1800) => {
-    confettiParts = Array.from({length: 160}, ()=>({
-      x: Math.random()*canvas.width, y: -20 - Math.random()*80, r: 4 + Math.random()*6,
-      s: 2 + Math.random()*3, a: 0.75 + Math.random()*0.25, c: colors[Math.floor(Math.random()*colors.length)], w: Math.random()*2*Math.PI
-    }));
-    const t0 = performance.now();
-    const step = (t) => {
-      const dt = Math.min(32, t - (step.prev||t)); step.prev = t;
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      confettiParts.forEach(p=>{
-        p.y += p.s * (dt/16); p.x += Math.sin((t+p.w)/220) * 1.2;
-        ctx.globalAlpha = p.a; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
-      });
-      if (t - t0 < duration){ confettiAnim = requestAnimationFrame(step); }
-      else { ctx.clearRect(0,0,canvas.width,canvas.height); cancelAnimationFrame(confettiAnim); confettiAnim=null; }
-    };
-    cancelAnimationFrame(confettiAnim); confettiAnim = requestAnimationFrame(step);
-  };
-
-  const checkWin = (val) => {
-    if (currentTarget==null) return;
-    if (val === currentTarget && lastWinValue !== val){
-      lastWinValue = val; chord(); startConfetti(2000);
-    }
-  };
-
-  /* ===== إظهار الوحدات يمينًا على الهاتف (حل موثوق) ===== */
-  const board = document.getElementById("board");
-  const unitsAnchor = document.getElementById("unitsAnchor");
-  function ensureUnitsVisible(){
-    // يجعل بداية العرض عند عمود الوحدات مهما كان سلوك RTL للمتصفح
-    if (!unitsAnchor) return;
-    unitsAnchor.scrollIntoView({block:"nearest", inline:"end"});
-    // تعزيز في بعض متصفحات أندرويد:
-    requestAnimationFrame(()=> unitsAnchor.scrollIntoView({block:"nearest", inline:"end"}));
-  }
-
-  /* ===== بدء ===== */
-  const keys = document.getElementById("keys"); // لوحة الأرقام
-  const buildKeypadOnce = () => { if (!keys.dataset.ready){ keys.dataset.ready="1"; buildKeypad(); }};
-  buildKeypadOnce();
-  renderAll();
-  addEventListener("pointerdown", ensureAudio, {once:true, passive:true});
-  // عند التحميل وأول تغيير حجم، أظهر الوحدات:
-  ensureUnitsVisible();
-  addEventListener("resize", ()=>{ ensureUnitsVisible(); }, {passive:true});
-})();
-</script>
-</body>
-</html>
+  cards
